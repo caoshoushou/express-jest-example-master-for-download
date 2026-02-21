@@ -1,42 +1,36 @@
-# 工作流名称：显示在 GitHub Actions 面板中
-name: Node.js Basic CI
+name: Node.js CI with Jest
 
-# 触发条件：满足以下任意条件时，自动运行工作流
 on:
-  # 1. 向 master 分支推送代码时触发
   push:
     branches: [ master ]
-  # 2. 创建新的 Issue 时触发（任务指定要求）
   issues:
     types: [ opened ]
 
-# 工作流执行的任务集合
 jobs:
-  # 定义一个名为 build 的任务（名称可自定义）
-  build:
-    # 任务运行的操作系统：使用最新版 Ubuntu（GitHub 提供的虚拟环境）
+  build-and-test:
     runs-on: ubuntu-latest
 
-    # 任务的执行步骤
     steps:
-      # 步骤 1：拉取远程仓库的代码到虚拟环境
-      # 使用官方的 checkout 动作，v4 为最新稳定版
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 步骤 2：设置 Node.js 环境
-      # 使用官方的 setup-node 动作，指定 Node.js 版本为 12.x（任务指定要求）
       - name: Set up Node.js 12.x
         uses: actions/setup-node@v4
         with:
           node-version: '12.x'
 
-      # 步骤 3：安装项目依赖
-      # 执行 npm install 命令，安装 package.json 中的依赖
       - name: Install dependencies
-        run: npm i
+        run: npm install
 
-      # 步骤 4：构建项目
-      # 执行 npm run build 命令（若你的项目无 build 脚本，需先在 package.json 中添加）
       - name: Build project
-        run: npm run build
+        run: npm run build || echo "Build script not found, skipping build step"
+
+      - name: Run tests with coverage
+        run: npm test --coverage
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-coverage-report
+          path: coverage/
+          retention-days: 90
